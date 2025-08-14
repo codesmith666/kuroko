@@ -1,0 +1,9 @@
+services:
+  main:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - ../:/workspace
+    tty: true
+    user: root

@@ -1,0 +1,14 @@
+{
+	"name": "profire-account",
+	"dockerComposeFile": "./docker-compose.yml",
+	"service": "main",
+	"workspaceFolder": "/workspace",
+	"remoteUser": "root",
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"golang.go"
+			]
+		}
+	}
+}
