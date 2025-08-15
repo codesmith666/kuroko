@@ -61,15 +61,6 @@ func PrintAST(node Node, indent string) {
 		PrintAST(n.Ident, indent+"  ")
 		PrintAST(n.Value, indent+"  ")
 
-	case *Identifier:
-		var t string
-		if n.Type != nil {
-			t = n.Type.String()
-		} else {
-			t = "?"
-		}
-		fmt.Printf("%s  %s: %s\n", indent, n.Name, t)
-
 	case *ExpressionStatement:
 		fmt.Printf("%s %s\n", indent+"  ", n.Token.Type)
 		PrintAST(n.Expression, indent+"  ")
@@ -120,6 +111,18 @@ func PrintAST(node Node, indent string) {
 		for _, s := range n.Body.Statements {
 			PrintAST(s, indent+"  ")
 		}
+
+	case *Identifier:
+		var t string
+		if n.Type != nil {
+			t = n.Type.String()
+		} else {
+			t = "?"
+		}
+		fmt.Printf("%s  %s: %s\n", indent, n.Name, t)
+
+	case *TypeLiteral:
+		fmt.Printf("%s  %s\n", indent, n.Value)
 
 	case *HashLiteral:
 		for k, v := range n.Pairs {

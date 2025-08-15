@@ -54,6 +54,7 @@ const (
 	RBRACKET      TokenType = "]"
 	DOUBLE_QUOTE  TokenType = "\""
 	SINGLE_QUOTE  TokenType = "'"
+	INSTANCEOF    TokenType = "instanceof"
 
 	INLINE_OPEN TokenType = "${"
 	YEN_R       TokenType = "\\r"
@@ -85,7 +86,6 @@ const (
 )
 
 // オペレータの配列
-// operatorはtokenとliteralが位置するのでmapにしない
 var NormalOperators = []TokenType{
 	ASSIGN,
 	PLUS,
@@ -128,6 +128,7 @@ var NormalOperators = []TokenType{
 	RBRACKET,
 	DOUBLE_QUOTE,
 	SINGLE_QUOTE,
+	INSTANCEOF,
 }
 
 var StringOperators = []TokenType{

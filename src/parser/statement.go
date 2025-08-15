@@ -86,6 +86,8 @@ func (p *Parser) parseExpressionStatement() ast.Statement {
 	stmt := &ast.ExpressionStatement{Token: *p.curToken}
 
 	// 式の解析を開始する
+	//   式に対する代入文があるときと
+	//   関数呼び出しなどのただの式の実行で処理をわける
 	expr := p.parseExpression(LOWEST)
 	if p.peekTokenIs(token.ASSIGN) {
 		return p.parseAssignStatement(expr)
@@ -124,19 +126,27 @@ func (p *Parser) parseBlockStatement() *ast.BlockStatement {
 	block := &ast.BlockStatement{Token: *p.curToken}
 	block.Statements = []ast.Statement{}
 
+	// ステートメントを一覧に追加
+	// このとき return this を見つけたら
+	// コンストラクタを示すフラグも返す。
+	addStatements := func(stmt ast.Statement) {
+		block.Statements = append(block.Statements, stmt)
+	}
+
+	// {～}をブロックとして取得するか、１分だけ取得するか
 	if p.curTokenIs(token.LBRACE) {
 		p.nextToken()
 		for !p.curTokenIs(token.RBRACE) && !p.curTokenIs(token.EOF) {
 			stmt := p.parseStatement()
-			block.Statements = append(block.Statements, stmt)
+			addStatements(stmt)
 			p.nextToken()
 		}
 		// この時点でcurはRBRACEだけとp.NexeToken()しない
 	} else {
 		stmt := p.parseExpressionStatement()
-		block.Statements = append(block.Statements, stmt)
+		addStatements(stmt)
 	}
-
+	// コンストラクタを示すフラグをセット
 	return block
 }
 

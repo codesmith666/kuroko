@@ -12,6 +12,7 @@ const (
 	LOWEST
 	EQUALS      // ==
 	LESSGREATER // > or <
+	INSTANCEOF  //
 	SUM         // +
 	PRODUCT     // *
 	PREFIX      // -X or !X
@@ -21,17 +22,18 @@ const (
 )
 
 var precedences = map[token.TokenType]int{
-	token.EQ:       EQUALS,
-	token.NE:       EQUALS,
-	token.LT:       LESSGREATER,
-	token.GT:       LESSGREATER,
-	token.PLUS:     SUM,
-	token.MINUS:    SUM,
-	token.SLASH:    PRODUCT,
-	token.ASTERISK: PRODUCT,
-	token.LPAREN:   CALL,
-	token.LBRACKET: INDEX,
-	token.ACCESS:   DOT,
+	token.EQ:         EQUALS,
+	token.NE:         EQUALS,
+	token.LT:         LESSGREATER,
+	token.GT:         LESSGREATER,
+	token.PLUS:       SUM,
+	token.MINUS:      SUM,
+	token.SLASH:      PRODUCT,
+	token.ASTERISK:   PRODUCT,
+	token.LPAREN:     CALL,
+	token.LBRACKET:   INDEX,
+	token.ACCESS:     DOT,
+	token.INSTANCEOF: INSTANCEOF,
 }
 
 type (
@@ -61,7 +63,8 @@ func NewParser(input string) *Parser {
 
 	// そのトークンが式の先頭に現れる可能性があるならprefixに登録する
 	p.prefixParseFns = map[token.TokenType]prefixParseFn{
-		token.IDENT:    p.parseIdentifier,
+		token.IDENT:    p.parseIdentifierLiteral,
+		token.TYPE:     p.parseTypeLiteral,
 		token.INTEGER:  p.parseIntegerLiteral,
 		token.STRING:   p.parseStringLiteral,
 		token.NOT:      p.parsePrefixExpression,
@@ -77,17 +80,18 @@ func NewParser(input string) *Parser {
 	}
 
 	p.infixParseFns = map[token.TokenType]infixParseFn{
-		token.PLUS:     p.parseInfixExpression,
-		token.MINUS:    p.parseInfixExpression,
-		token.SLASH:    p.parseInfixExpression,
-		token.ASTERISK: p.parseInfixExpression,
-		token.EQ:       p.parseInfixExpression,
-		token.NE:       p.parseInfixExpression,
-		token.LT:       p.parseInfixExpression,
-		token.GT:       p.parseInfixExpression,
-		token.LPAREN:   p.parseCallExpression,
-		token.LBRACKET: p.parseIndexExpression,
-		token.ACCESS:   p.parseDotExpression,
+		token.PLUS:       p.parseInfixExpression,
+		token.MINUS:      p.parseInfixExpression,
+		token.SLASH:      p.parseInfixExpression,
+		token.ASTERISK:   p.parseInfixExpression,
+		token.EQ:         p.parseInfixExpression,
+		token.NE:         p.parseInfixExpression,
+		token.LT:         p.parseInfixExpression,
+		token.GT:         p.parseInfixExpression,
+		token.LPAREN:     p.parseCallExpression,
+		token.LBRACKET:   p.parseIndexExpression,
+		token.ACCESS:     p.parseDotExpression,
+		token.INSTANCEOF: p.parseInfixExpression,
 	}
 	// 最初のトークンを準備する
 	p.nextToken()
@@ -141,6 +145,13 @@ func (p *Parser) expectPeek(t token.TokenType) bool {
 
 func (p *Parser) Errors() []string {
 	return p.errors
+}
+
+func (p *Parser) addError(t token.Token, format string, a ...interface{}) {
+	a = append(a, t.Row)
+	a = append(a, t.Col)
+	msg := fmt.Sprintf(format+" on line %d colmun %d", a...)
+	p.errors = append(p.errors, msg)
 }
 
 func (p *Parser) peekError(t token.TokenType) {

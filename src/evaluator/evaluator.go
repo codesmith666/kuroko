@@ -1,14 +1,27 @@
 package evaluator
 
 import (
+	"math/rand"
 	"monkey/ast"
 	"monkey/object"
 )
 
+const letters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+
+func RandString(n int) string {
+	b := make([]byte, n)
+	for i := range b {
+		b[i] = letters[rand.Intn(len(letters))]
+	}
+	return string(b)
+}
+
 func Eval(node ast.Node, env *object.Environment) object.Object {
 	switch node := node.(type) {
 
+	//
 	// Statements
+	//
 	case *ast.Program:
 		return evalProgram(node, env)
 
@@ -26,19 +39,19 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 		return &object.ReturnValue{Value: val}
 
 	case *ast.LetStatement:
-		val := Eval(node.Value, env)
-		if isError(val) {
-			return val
-		}
-		env.Set(node.Ident.Name, val)
-
+		return evalLetStatement(node, env)
 	case *ast.DeriveStatement:
 		return evalDeriveStatment(node, env)
 
 	case *ast.AssignStatement:
 		return evalAssignStatement(node, env)
 
+	//
 	// Literal
+	//
+	case *ast.TypeLiteral:
+		return &object.Type{Name: node.Value}
+
 	case *ast.IntegerLiteral:
 		return &object.Integer{Value: node.Value}
 
@@ -51,8 +64,13 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 	case *ast.FunctionLiteral:
 		params := node.Parameters
 		body := node.Body
-		return &object.Function{Parameters: params, Env: env, Body: body}
-
+		name := "function-" + RandString(16)
+		return &object.Function{
+			Parameters: params,
+			Env:        env,
+			Body:       body,
+			Name:       name,
+		}
 	case *ast.ArrayLiteral:
 		elements := evalExpressions(node.Elements, env)
 		if len(elements) == 1 && isError(elements[0]) {
@@ -63,7 +81,9 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 	case *ast.HashLiteral:
 		return evalHashLiteral(node, env)
 
+	//
 	// Expression
+	//
 	case *ast.PrefixExpression:
 		right := Eval(node.Right, env)
 		if isError(right) {
@@ -72,28 +92,10 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 		return evalPrefixExpression(node.Operator, right)
 
 	case *ast.InfixExpression:
-		left := Eval(node.Left, env)
-		if isError(left) {
-			return left
-		}
-
-		right := Eval(node.Right, env)
-		if isError(right) {
-			return right
-		}
-
-		return evalInfixExpression(node.Operator, left, right)
+		return evalInfixExpression(node, env)
 
 	case *ast.IndexExpression:
-		left := Eval(node.Left, env)
-		if isError(left) {
-			return left
-		}
-		index := Eval(node.Index, env)
-		if isError(index) {
-			return index
-		}
-		return evalIndexExpression(left, index)
+		return evalIndexExpression(node, env)
 
 	case *ast.IfExpression:
 		return evalIfExpression(node, env)
@@ -104,7 +106,9 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 	case *ast.DotExpression:
 		return evalDotExpression(node, env)
 
+	//
 	// identifier
+	//
 	case *ast.Identifier:
 		return evalIdentifier(node, env)
 	}

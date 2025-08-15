@@ -16,7 +16,7 @@ func evalBlockStatement(
 
 	for _, statement := range block.Statements {
 		result = Eval(statement, env)
-
+		// エラーじゃなかったら
 		if result != nil {
 			rt := result.Type()
 			if rt == object.RETURN_VALUE_OBJ || rt == object.ERROR_OBJ {
@@ -36,27 +36,37 @@ func evalDeriveStatment(
 	env *object.Environment,
 ) object.Object {
 
-	val := Eval(node.Right, env)
-	if isError(val) {
-		return val
+	right := Eval(node.Right, env)
+	if isError(right) {
+		return right
 	}
 
-	if val == nil {
+	if right == nil {
 		return newError("parse operator(...) requires a hash,got=nil on line %d col %d.", node.Token.Row, node.Token.Col)
 	}
 
-	switch val.Type() {
-	case object.HASH_OBJ:
-		hashObj := val.(*object.Hash)
-		for _, pair := range hashObj.Pairs {
-			if pair.Key.Type() == object.STRING_OBJ {
-				env.Set(pair.Key.(*object.String).Value, pair.Value)
-			}
-		}
-		return val
+	switch rightValue := right.(type) {
+	case *object.Hash:
+		env.DeriveFromHash(rightValue)
+		return right
+	case *object.Class:
+		env.DeriveFromClass(rightValue)
+		return right
 	default:
-		return newError("parse operator(...) requires a hash,got= %s", val.Type())
+		return newError("parse operator(...) requires a hash,got= %s", right.Type())
 	}
+}
+
+/*
+ * 変数束縛
+ */
+func evalLetStatement(node *ast.LetStatement, env *object.Environment) object.Object {
+	val := Eval(node.Value, env)
+	if isError(val) {
+		return val
+	}
+	env.Set(node.Ident.Name, val)
+	return nil
 }
 
 /*

@@ -289,7 +289,6 @@ func (l *Lexer) tokenizeNormal(parentMode LexerMode) {
 				} else {
 					l.addToken(token.LINE_COMMENT, c, row, col)
 				}
-				fmt.Printf("%s\n", l.tokens[length-1].Literal)
 			case "/*":
 				l.addToken(token.BLOCK_COMMENT, l.getBlockComment(), row, col)
 			default:

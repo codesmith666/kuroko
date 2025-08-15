@@ -57,11 +57,17 @@ func TestEvaluator(t *testing.T) {
 		imm f1 = ()=>{
 			puts("f1");
 		}
-		//return this;
+		// mutはオーバライド可能
+		mut f2 = ()=>{
+			puts("f2");
+		}
+		return this;
 	}
 
 	imm ClassA = ()=>{
 		... ClassBase()
+		imm parentF2 = f2;
+
 		mut a1 = {
 			"hoge":"HOGE",
 		};
@@ -69,6 +75,7 @@ func TestEvaluator(t *testing.T) {
 
 		imm f2 = ()=>{
 			f1();
+			parentF2();
 			puts("constructor");
 			puts(a1["gabu"]);
 			puts(base);
@@ -77,6 +84,74 @@ func TestEvaluator(t *testing.T) {
 	};
 	imm a = ClassA();
 	a.f2()
+`
+	input = `
+	imm ClassA = ()=>{
+		mut hoge=1;
+		return this;
+	}
+	imm ClassB = ()=>{
+		...ClassA()
+		mut gabu=2;
+		return this;
+	}
+	imm ClassC = ()=>{
+		...ClassB()
+		mut nano=3;
+		return this;
+	}
+	imm ClassD = ()=>{
+		mut desu=4;
+		return this;
+	}
+	imm ClassE = ()=>{
+		...ClassA()
+		...ClassD()
+		mut neow=5;
+		return this;
+	}
+		
+	imm a= ClassA();
+	imm b= ClassB();
+	imm c= ClassC();
+	imm d= ClassD();
+	imm e= ClassE();
+	puts("hello" instanceof string)
+	puts("------------- t/f/f/f/f")
+	puts(a instanceof ClassA)
+	puts(a instanceof ClassB)
+	puts(a instanceof ClassC)
+	puts(a instanceof ClassD)
+	puts(a instanceof ClassE)
+
+	puts("------------- t/t/f/f/f")
+	puts(b instanceof ClassA)
+	puts(b instanceof ClassB)
+	puts(b instanceof ClassC)
+	puts(b instanceof ClassD)
+	puts(b instanceof ClassE)
+
+	puts("------------- t/t/t/f/f")
+	puts(c instanceof ClassA)
+	puts(c instanceof ClassB)
+	puts(c instanceof ClassC)
+	puts(c instanceof ClassD)
+	puts(c instanceof ClassE)
+
+	puts("------------- f/f/f/t/f")
+	puts(d instanceof ClassA)
+	puts(d instanceof ClassB)
+	puts(d instanceof ClassC)
+	puts(d instanceof ClassD)
+	puts(d instanceof ClassE)
+
+	puts("------------- t/f/f/t/t")
+	puts(e instanceof ClassA)
+	puts(e instanceof ClassB)
+	puts(e instanceof ClassC)
+	puts(e instanceof ClassD)
+	puts(e instanceof ClassE)
+
 
 `
 

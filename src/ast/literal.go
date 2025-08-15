@@ -113,3 +113,13 @@ func (fl *FunctionLiteral) String(depth int) string {
 	out.WriteString(fl.Body.String(depth)) // +1しない
 	return out.String()
 }
+
+// 型リテラル
+type TypeLiteral struct {
+	Token token.Token // 'string', 'integer', etc.
+	Value string
+}
+
+func (tl *TypeLiteral) expressionNode()         {}
+func (tl *TypeLiteral) TokenLiteral() string    { return tl.Token.Literal }
+func (tl *TypeLiteral) String(depth int) string { return tl.Value }

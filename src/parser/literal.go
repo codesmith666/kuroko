@@ -7,6 +7,16 @@ import (
 	"strconv"
 )
 
+// 識別子を抽象構文木に設定して返す
+func (p *Parser) parseIdentifierLiteral() ast.Expression {
+	return &ast.Identifier{Token: *p.curToken, Name: p.curToken.Literal}
+}
+
+// 型リテラル
+func (p *Parser) parseTypeLiteral() ast.Expression {
+	return &ast.TypeLiteral{Token: *p.curToken, Value: p.curToken.Literal}
+}
+
 // 二値
 func (p *Parser) parseBoolean() ast.Expression {
 	return &ast.BooleanLiteral{Token: *p.curToken, Value: p.curTokenIs(token.TRUE)}

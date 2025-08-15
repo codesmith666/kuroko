@@ -3,6 +3,7 @@ package evaluator
 import (
 	"monkey/ast"
 	"monkey/object"
+	"strings"
 )
 
 var (
@@ -68,9 +69,21 @@ func evalMinusPrefixOperatorExpression(right object.Object) object.Object {
  * 二項演算子
  */
 func evalInfixExpression(
-	operator string,
-	left, right object.Object,
+	node *ast.InfixExpression,
+	env *object.Environment,
 ) object.Object {
+	operator := node.Operator
+
+	left := Eval(node.Left, env)
+	if isError(left) {
+		return left
+	}
+
+	right := Eval(node.Right, env)
+	if isError(right) {
+		return right
+	}
+
 	switch {
 	case left.Type() == object.INTEGER_OBJ && right.Type() == object.INTEGER_OBJ:
 		return evalIntegerInfixExpression(operator, left, right)
@@ -80,6 +93,8 @@ func evalInfixExpression(
 		return evalBoolLiteral(left == right)
 	case operator == "!=":
 		return evalBoolLiteral(left != right)
+	case operator == "instanceof":
+		return evalInstanceOfExpression(left, right)
 	case left.Type() != right.Type():
 		return newError("type mismatch: %s %s %s",
 			left.Type(), operator, right.Type())
@@ -170,7 +185,17 @@ func evalIfExpression(
 /*
  * インデックスアクセス
  */
-func evalIndexExpression(left, index object.Object) object.Object {
+func evalIndexExpression(node *ast.IndexExpression, env *object.Environment) object.Object {
+
+	left := Eval(node.Left, env)
+	if isError(left) {
+		return left
+	}
+	index := Eval(node.Index, env)
+	if isError(index) {
+		return index
+	}
+
 	switch {
 	// 配列のインデックスアクセス
 	case left.Type() == object.ARRAY_OBJ && index.Type() == object.INTEGER_OBJ:
@@ -206,14 +231,18 @@ func evalIndexExpression(left, index object.Object) object.Object {
  * ハッシュアクセス
  */
 func evalDotExpression(node *ast.DotExpression, env *object.Environment) object.Object {
-
+	// 左辺はハッシュ
+	// 右辺はenvからGetできない識別子なので名前を取得する。
 	left := Eval(node.Left, env)
 	right := &object.String{Value: node.Right.Name}
 
+	// ハッシュかどうかチェック
 	hashObj, ok := left.(*object.Hash)
 	if !ok {
 		return newError("not a hash: %s", left.Type())
 	}
+
+	// ハッシュオブジェクトから名前で値を取得
 	key := &object.String{Value: right.Value}
 	pair, ok := hashObj.Pairs[key.HashKey()]
 	if !ok {
@@ -252,7 +281,11 @@ func evalCallExpression(
 		evaluated := Eval(fn.Body, extendedEnv)
 		// 戻り値を取得する
 		if returnValue, ok := evaluated.(*object.ReturnValue); ok {
-			return returnValue.Value
+			result := returnValue.Value
+			if class := result.(*object.Class); class != nil {
+				class.Name = fn.Name
+			}
+			return result
 		}
 		return evaluated
 
@@ -262,4 +295,36 @@ func evalCallExpression(
 	default:
 		return newError("not a function: %s", fn.Type())
 	}
+}
+
+func evalInstanceOfExpression(left object.Object, right object.Object) object.Object {
+
+	switch l := left.(type) {
+	case *object.Class:
+		// fmt.Printf("%T", right)
+		switch r := right.(type) {
+		case *object.Function:
+			//	名前が一致したら
+			if l.Name == r.Name {
+				return evalBoolLiteral(true)
+			}
+			// 子クラスを検索
+			if _, ok := l.Children[r.Name]; ok {
+				return evalBoolLiteral(true)
+			}
+			return evalBoolLiteral(false)
+		default:
+			return newError("right operand of instanceof must be a primitive, got %s", right.Type())
+		}
+	default:
+		switch r := right.(type) {
+		case *object.Type:
+			leftType := strings.ToLower(string(left.Type()))
+			rightType := strings.ToLower(r.Name)
+			return evalBoolLiteral(leftType == rightType)
+		default:
+			return newError("right operand of instanceof must be a primitive, got %s", right.Type())
+		}
+	}
+
 }

@@ -5,6 +5,7 @@ import (
 	"monkey/object"
 )
 
+// nativeBoolToBooleanObject
 func evalBoolLiteral(input bool) *object.Boolean {
 	if input {
 		return TRUE_OBJECT

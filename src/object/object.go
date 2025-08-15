@@ -30,6 +30,9 @@ const (
 
 	ARRAY_OBJ ObjectType = "ARRAY"
 	HASH_OBJ  ObjectType = "HASH"
+
+	TYPE_OBJ  ObjectType = "TYPE"
+	CLASS_OBJ ObjectType = "CLASS"
 )
 
 /*
@@ -121,22 +124,29 @@ type Function struct {
 	Parameters []*ast.Identifier
 	Body       *ast.BlockStatement
 	Env        *Environment
+	Name       string
 }
 
 func (f *Function) Type() ObjectType { return FUNCTION_OBJ }
 func (f *Function) Inspect() string {
 	var out bytes.Buffer
 
+	out.WriteString("------------\n")
+
 	params := []string{}
 	for _, p := range f.Parameters {
 		params = append(params, p.String(0))
 	}
 
+	if f.Name == "" {
+		out.WriteString("$unnamed")
+	} else {
+		out.WriteString(f.Name)
+	}
 	out.WriteString("(")
 	out.WriteString(strings.Join(params, ", "))
-	out.WriteString(") => {\n")
+	out.WriteString(") => \n")
 	out.WriteString(f.Body.String(0))
-	out.WriteString("\n}")
 
 	return out.String()
 }
@@ -218,3 +228,42 @@ func (h *Hash) Inspect() string {
 
 	return out.String()
 }
+
+/*
+ * クラス
+ */
+type Class struct {
+	Hash
+	Name     string
+	Children map[string]struct{}
+}
+
+func (c *Class) Type() ObjectType { return CLASS_OBJ }
+func (c *Class) Inspect() string {
+	var out bytes.Buffer
+
+	out.WriteString(c.Name)
+	out.WriteString(c.Hash.Inspect())
+	if c.Children == nil {
+		out.WriteString("from ()")
+	} else {
+		out.WriteString("from (")
+		from := []string{}
+		for k, _ := range c.Children {
+			from = append(from, k)
+		}
+		out.WriteString(strings.Join(from, ","))
+		out.WriteString(")")
+	}
+	return out.String()
+}
+
+/*
+ * 型
+ */
+type Type struct {
+	Name string
+}
+
+func (t *Type) Type() ObjectType { return TYPE_OBJ }
+func (t *Type) Inspect() string  { return t.Name }
