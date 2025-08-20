@@ -151,9 +151,11 @@ func TestEvaluator(t *testing.T) {
 	puts(e instanceof ClassC)
 	puts(e instanceof ClassD)
 	puts(e instanceof ClassE)
-
-
 `
+
+	// 	input = `
+	// 	imm a = 11.11 + 12.34;
+	// `
 
 	env := object.NewEnvironment()
 	p := parser.NewParser(input)

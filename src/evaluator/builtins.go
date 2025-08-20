@@ -28,7 +28,7 @@ var builtins = map[string]*object.Builtin{
 			for _, arg := range args {
 				fmt.Println(arg.Inspect())
 			}
-			return NULL_OBJCT
+			return object.NULL
 		},
 	},
 	"first": &object.Builtin{
@@ -47,7 +47,7 @@ var builtins = map[string]*object.Builtin{
 				return arr.Elements[0]
 			}
 
-			return NULL_OBJCT
+			return object.NULL
 		},
 	},
 	"last": &object.Builtin{
@@ -67,7 +67,7 @@ var builtins = map[string]*object.Builtin{
 				return arr.Elements[length-1]
 			}
 
-			return NULL_OBJCT
+			return object.NULL
 		},
 	},
 	"rest": &object.Builtin{
@@ -89,7 +89,7 @@ var builtins = map[string]*object.Builtin{
 				return &object.Array{Elements: newElements}
 			}
 
-			return NULL_OBJCT
+			return object.NULL
 		},
 	},
 	"push": &object.Builtin{

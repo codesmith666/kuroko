@@ -85,8 +85,8 @@ func evalAssignStatement(
 
 	// 変数再代入
 	case *ast.Identifier:
-		_, ok := env.Get(nameExpr.Name)
-		if !ok {
+		result := env.Get(nameExpr.Name)
+		if result == nil {
 			return newError("identifier not found: %s", nameExpr.Name)
 		}
 		env.Set(nameExpr.Name, right)
@@ -103,7 +103,7 @@ func evalAssignStatement(
 		switch leftObj := left.(type) {
 		case *object.Hash:
 			key := &object.String{Value: index.Name}
-			leftObj.Pairs[key.HashKey()] = object.HashPair{Key: key, Value: right}
+			leftObj.Set(key, right)
 			return right
 		default:
 			return newError("assignment target not assignable: %s", left.Type())
@@ -132,12 +132,10 @@ func evalAssignStatement(
 			return right
 
 		case *object.Hash:
-			key, ok := index.(object.Hashable)
-			if !ok {
-				return newError("unusable as hash key: %s", index.Type())
+			err := leftObj.Set(index, right)
+			if err != nil {
+				return newError("%s", err.Error())
 			}
-			hashed := key.HashKey()
-			leftObj.Pairs[hashed] = object.HashPair{Key: index, Value: right}
 			return right
 
 		default:

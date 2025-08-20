@@ -32,9 +32,35 @@ func (p *Parser) parseIntegerLiteral() ast.Expression {
 		p.errors = append(p.errors, msg)
 		return nil
 	}
-
 	lit.Value = value
+	return lit
+}
 
+// 浮動小数点
+func (p *Parser) parseFloatLiteral() ast.Expression {
+	lit := &ast.FloatLiteral{Token: *p.curToken}
+
+	value, err := strconv.ParseFloat(p.curToken.Literal, 64)
+	if err != nil {
+		msg := fmt.Sprintf("could not parse %q as float", p.curToken.Literal)
+		p.errors = append(p.errors, msg)
+		return nil
+	}
+	lit.Value = value
+	return lit
+}
+
+// 複素数
+func (p *Parser) parseComplexLiteral() ast.Expression {
+	lit := &ast.ComplexLiteral{Token: *p.curToken}
+
+	value, err := strconv.ParseComplex(p.curToken.Literal, 128)
+	if err != nil {
+		msg := fmt.Sprintf("could not parse %q as complex", p.curToken.Literal)
+		p.errors = append(p.errors, msg)
+		return nil
+	}
+	lit.Value = value
 	return lit
 }
 
@@ -94,19 +120,6 @@ func (p *Parser) parseHashLiteral() ast.Expression {
 }
 
 // 関数リテラル
-// func (p *Parser) parseFunctionLiteral() ast.Expression {
-// 	lit := &ast.FunctionLiteral{Token: *p.curToken}
-// 	if !p.expectPeek(token.LPAREN) {
-// 		return nil
-// 	}
-// 	lit.Parameters = p.parseFunctionParameters()
-// 	if !p.expectPeek(token.LBRACE) {
-// 		return nil
-// 	}
-// 	lit.Body = p.parseBlockStatement()
-// 	return lit
-// }
-
 func (p *Parser) parseArrowFunctionLiteral() ast.Expression {
 
 	lit := &ast.FunctionLiteral{Token: *p.curToken}

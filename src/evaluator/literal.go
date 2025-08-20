@@ -8,16 +8,16 @@ import (
 // nativeBoolToBooleanObject
 func evalBoolLiteral(input bool) *object.Boolean {
 	if input {
-		return TRUE_OBJECT
+		return object.TRUE
 	}
-	return FALSE_OBJECT
+	return object.FALSE
 }
 
 func evalHashLiteral(
 	node *ast.HashLiteral,
 	env *object.Environment,
 ) object.Object {
-	pairs := make(map[object.HashKey]object.HashPair)
+	hash := object.NewHash()
 
 	for keyNode, valueNode := range node.Pairs {
 		key := Eval(keyNode, env)
@@ -25,19 +25,16 @@ func evalHashLiteral(
 			return key
 		}
 
-		hashKey, ok := key.(object.Hashable)
-		if !ok {
-			return newError("unusable as hash key: %s", key.Type())
-		}
-
 		value := Eval(valueNode, env)
 		if isError(value) {
 			return value
 		}
 
-		hashed := hashKey.HashKey()
-		pairs[hashed] = object.HashPair{Key: key, Value: value}
+		err := hash.Set(key, value)
+		if err != nil {
+			return newError("%s", err.Error())
+		}
 	}
 
-	return &object.Hash{Pairs: pairs}
+	return hash
 }

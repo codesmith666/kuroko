@@ -157,6 +157,10 @@ func PrintAST(node Node, indent string) {
 		PrintAST(n.Left, indent+"  ")
 		fmt.Printf("%s  [right]\n", indent)
 		PrintAST(n.Right, indent+"  ")
+	case *FloatLiteral:
+		fmt.Printf("%s  %f\n", indent, n.Value)
+	case *ComplexLiteral:
+		fmt.Printf("%s  %f\n", indent, n.Value)
 
 	default:
 		fmt.Printf("%sUnknown node: %T\n", indent, n)

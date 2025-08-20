@@ -63,20 +63,22 @@ func NewParser(input string) *Parser {
 
 	// そのトークンが式の先頭に現れる可能性があるならprefixに登録する
 	p.prefixParseFns = map[token.TokenType]prefixParseFn{
-		token.IDENT:    p.parseIdentifierLiteral,
-		token.TYPE:     p.parseTypeLiteral,
-		token.INTEGER:  p.parseIntegerLiteral,
-		token.STRING:   p.parseStringLiteral,
-		token.NOT:      p.parsePrefixExpression,
-		token.MINUS:    p.parsePrefixExpression,
-		token.INC:      p.parsePrefixExpression,
-		token.PARSE:    p.parsePrefixExpression,
-		token.TRUE:     p.parseBoolean,
-		token.FALSE:    p.parseBoolean,
-		token.LPAREN:   p.parseGroupedExpression, // 関数リテラルもここで
-		token.IF:       p.parseIfExpression,
-		token.LBRACKET: p.parseArrayLiteral,
-		token.LBRACE:   p.parseHashLiteral,
+		token.IDENT:     p.parseIdentifierLiteral,
+		token.TYPE:      p.parseTypeLiteral,
+		token.INTEGER:   p.parseIntegerLiteral,
+		token.FLOAT:     p.parseFloatLiteral,
+		token.IMAGINARY: p.parseComplexLiteral,
+		token.STRING:    p.parseStringLiteral,
+		token.NOT:       p.parsePrefixExpression,
+		token.MINUS:     p.parsePrefixExpression,
+		token.INC:       p.parsePrefixExpression,
+		token.PARSE:     p.parsePrefixExpression,
+		token.TRUE:      p.parseBoolean,
+		token.FALSE:     p.parseBoolean,
+		token.LPAREN:    p.parseGroupedExpression, // 関数リテラルもここで
+		token.IF:        p.parseIfExpression,
+		token.LBRACKET:  p.parseArrayLiteral,
+		token.LBRACE:    p.parseHashLiteral,
 	}
 
 	p.infixParseFns = map[token.TokenType]infixParseFn{

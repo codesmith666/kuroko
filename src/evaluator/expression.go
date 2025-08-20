@@ -6,12 +6,6 @@ import (
 	"strings"
 )
 
-var (
-	NULL_OBJCT   = &object.Null{}
-	TRUE_OBJECT  = &object.Boolean{Value: true}
-	FALSE_OBJECT = &object.Boolean{Value: false}
-)
-
 func evalExpressions(
 	exps []ast.Expression,
 	env *object.Environment,
@@ -45,14 +39,14 @@ func evalPrefixExpression(operator string, right object.Object) object.Object {
 
 func evalBangOperatorExpression(right object.Object) object.Object {
 	switch right {
-	case TRUE_OBJECT:
-		return FALSE_OBJECT
-	case FALSE_OBJECT:
-		return TRUE_OBJECT
-	case NULL_OBJCT:
-		return TRUE_OBJECT
+	case object.TRUE:
+		return object.FALSE
+	case object.FALSE:
+		return object.TRUE
+	case object.NULL:
+		return object.TRUE
 	default:
-		return FALSE_OBJECT
+		return object.FALSE
 	}
 }
 
@@ -89,6 +83,35 @@ func evalInfixExpression(
 		return evalIntegerInfixExpression(operator, left, right)
 	case left.Type() == object.STRING_OBJ && right.Type() == object.STRING_OBJ:
 		return evalStringInfixExpression(operator, left, right)
+	case left.Type() == object.FLOAT_OBJ && right.Type() == object.FLOAT_OBJ:
+		return evalFloatInfixExpression(operator, left, right)
+	case left.Type() == object.COMPLEX_OBJ && right.Type() == object.COMPLEX_OBJ:
+		return evalComplexInfixExpression(operator, left, right)
+
+	// 型昇格
+	case left.Type() == object.INTEGER_OBJ && right.Type() == object.FLOAT_OBJ:
+		return evalFloatInfixExpression(operator,
+			&object.Float{Value: float64(left.(*object.Integer).Value)}, right)
+
+	case left.Type() == object.FLOAT_OBJ && right.Type() == object.INTEGER_OBJ:
+		return evalFloatInfixExpression(operator,
+			left, &object.Float{Value: float64(right.(*object.Integer).Value)})
+
+	case left.Type() == object.FLOAT_OBJ && right.Type() == object.COMPLEX_OBJ:
+		return evalComplexInfixExpression(operator,
+			&object.Complex{Value: complex(left.(*object.Float).Value, 0)}, right)
+
+	case left.Type() == object.COMPLEX_OBJ && right.Type() == object.FLOAT_OBJ:
+		return evalComplexInfixExpression(operator,
+			left, &object.Complex{Value: complex(right.(*object.Float).Value, 0)})
+
+	case left.Type() == object.INTEGER_OBJ && right.Type() == object.COMPLEX_OBJ:
+		return evalComplexInfixExpression(operator,
+			&object.Complex{Value: complex(float64(left.(*object.Integer).Value), 0)}, right)
+
+	case left.Type() == object.COMPLEX_OBJ && right.Type() == object.INTEGER_OBJ:
+		return evalComplexInfixExpression(operator,
+			left, &object.Complex{Value: complex(float64(right.(*object.Integer).Value), 0)})
 	case operator == "==":
 		return evalBoolLiteral(left == right)
 	case operator == "!=":
@@ -134,6 +157,66 @@ func evalIntegerInfixExpression(
 	}
 }
 
+func evalFloatInfixExpression(
+	operator string,
+	left, right object.Object,
+) object.Object {
+	leftVal := left.(*object.Float).Value
+	rightVal := right.(*object.Float).Value
+
+	switch operator {
+	case "+":
+		return &object.Float{Value: leftVal + rightVal}
+	case "-":
+		return &object.Float{Value: leftVal - rightVal}
+	case "*":
+		return &object.Float{Value: leftVal * rightVal}
+	case "/":
+		return &object.Float{Value: leftVal / rightVal}
+	case "<":
+		return evalBoolLiteral(leftVal < rightVal)
+	case ">":
+		return evalBoolLiteral(leftVal > rightVal)
+	case "==":
+		return evalBoolLiteral(leftVal == rightVal)
+	case "!=":
+		return evalBoolLiteral(leftVal != rightVal)
+	default:
+		return newError("unknown operator: %s %s %s",
+			left.Type(), operator, right.Type())
+	}
+}
+
+func evalComplexInfixExpression(
+	operator string,
+	left, right object.Object,
+) object.Object {
+	leftVal := left.(*object.Complex).Value
+	rightVal := right.(*object.Complex).Value
+
+	switch operator {
+	case "+":
+		return &object.Complex{Value: leftVal + rightVal}
+	case "-":
+		return &object.Complex{Value: leftVal - rightVal}
+	case "*":
+		return &object.Complex{Value: leftVal * rightVal}
+	case "/":
+		return &object.Complex{Value: leftVal / rightVal}
+	// case "<":
+	// 	return evalBoolLiteral(leftVal < rightVal)
+	// case ">":
+	// 	return evalBoolLiteral(leftVal > rightVal)
+	case "==":
+		return evalBoolLiteral(leftVal == rightVal)
+	case "!=":
+		return evalBoolLiteral(leftVal != rightVal)
+	default:
+		return newError("unknown operator: %s %s %s",
+			left.Type(), operator, right.Type())
+	}
+}
+
 func evalStringInfixExpression(
 	operator string,
 	left, right object.Object,
@@ -162,11 +245,11 @@ func evalIfExpression(
 
 	isTruthy := func(obj object.Object) bool {
 		switch obj {
-		case NULL_OBJCT:
+		case object.NULL:
 			return false
-		case TRUE_OBJECT:
+		case object.TRUE:
 			return true
-		case FALSE_OBJECT:
+		case object.FALSE:
 			return false
 		default:
 			return true
@@ -178,7 +261,7 @@ func evalIfExpression(
 	} else if ie.Alternative != nil {
 		return Eval(ie.Alternative, env)
 	} else {
-		return NULL_OBJCT
+		return object.NULL
 	}
 }
 
@@ -204,7 +287,7 @@ func evalIndexExpression(node *ast.IndexExpression, env *object.Environment) obj
 		max := int64(len(arrayObject.Elements) - 1)
 
 		if idx < 0 || idx > max {
-			return NULL_OBJCT
+			return object.NULL
 		}
 
 		return arrayObject.Elements[idx]
@@ -212,16 +295,17 @@ func evalIndexExpression(node *ast.IndexExpression, env *object.Environment) obj
 	case left.Type() == object.HASH_OBJ:
 		hashObject := left.(*object.Hash)
 
-		key, ok := index.(object.Hashable)
-		if !ok {
-			return newError("unusable as hash key: %s", index.Type())
+		val, err := hashObject.Get(index)
+		switch true {
+		case err == nil:
+			return val
+		case err.Is(object.InvalidKey):
+			return newError("%s", err.Error())
+		case err.Is(object.NotFound):
+			return object.UNDEFINED
+		default:
+			return newError("evalIndexExpression:Unreachable")
 		}
-
-		pair, ok := hashObject.Pairs[key.HashKey()]
-		if !ok {
-			return NULL_OBJCT
-		}
-		return pair.Value
 	default:
 		return newError("index operator not supported: %s", left.Type())
 	}
@@ -243,12 +327,17 @@ func evalDotExpression(node *ast.DotExpression, env *object.Environment) object.
 	}
 
 	// ハッシュオブジェクトから名前で値を取得
-	key := &object.String{Value: right.Value}
-	pair, ok := hashObj.Pairs[key.HashKey()]
-	if !ok {
-		return NULL_OBJCT
+	val, err := hashObj.Get(&object.String{Value: right.Value})
+	switch true {
+	case err == nil:
+		return val
+	case err.Is(object.InvalidKey):
+		return newError("%s", err.Error())
+	case err.Is(object.NotFound):
+		return object.UNDEFINED
+	default:
+		return newError("evalDotExpression:Unreachable")
 	}
-	return pair.Value
 }
 
 /*
@@ -283,7 +372,9 @@ func evalCallExpression(
 		if returnValue, ok := evaluated.(*object.ReturnValue); ok {
 			result := returnValue.Value
 			if class := result.(*object.Class); class != nil {
-				class.Name = fn.Name
+				if !class.SetClassName(fn.Name) {
+					return newError("class name already initialized.")
+				}
 			}
 			return result
 		}
@@ -304,12 +395,8 @@ func evalInstanceOfExpression(left object.Object, right object.Object) object.Ob
 		// fmt.Printf("%T", right)
 		switch r := right.(type) {
 		case *object.Function:
-			//	名前が一致したら
-			if l.Name == r.Name {
-				return evalBoolLiteral(true)
-			}
-			// 子クラスを検索
-			if _, ok := l.Children[r.Name]; ok {
+			//	名前が一致したら真なのでTRUEオブジェクトを返す
+			if l.InstanceOf(r.Name) {
 				return evalBoolLiteral(true)
 			}
 			return evalBoolLiteral(false)

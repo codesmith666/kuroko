@@ -34,6 +34,26 @@ func (il *IntegerLiteral) String(depth int) string {
 	return out.String()
 }
 
+// 浮動小数点
+type FloatLiteral struct {
+	Token token.Token
+	Value float64
+}
+
+func (fl *FloatLiteral) expressionNode()         {}
+func (fl *FloatLiteral) TokenLiteral() string    { return fl.Token.Literal }
+func (fl *FloatLiteral) String(depth int) string { return fl.Token.Literal }
+
+// 複素数
+type ComplexLiteral struct {
+	Token token.Token
+	Value complex128
+}
+
+func (cl *ComplexLiteral) expressionNode()         {}
+func (cl *ComplexLiteral) TokenLiteral() string    { return cl.Token.Literal }
+func (cl *ComplexLiteral) String(depth int) string { return cl.Token.Literal }
+
 // 文字列
 type StringLiteral struct {
 	Token token.Token

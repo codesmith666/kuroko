@@ -9,7 +9,7 @@ func evalIdentifier(
 	node *ast.Identifier,
 	env *object.Environment,
 ) object.Object {
-	if val, ok := env.Get(node.Name); ok {
+	if val := env.Get(node.Name); val != nil {
 		return val
 	}
 
