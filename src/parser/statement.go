@@ -22,6 +22,10 @@ func (p *Parser) parseStatement() ast.Statement {
 		return p.parseEllipsisStatement()
 	case token.LOOP:
 		return p.parseLoopStatement()
+	case token.BREAK:
+		return p.parseBreakStatement()
+	case token.CONTINUE:
+		return p.parseContinueStatement()
 	default:
 		return p.parseExpressionStatement()
 	}
@@ -144,7 +148,8 @@ func (p *Parser) parseBlockStatement() *ast.BlockStatement {
 		}
 		// この時点でcurはRBRACEだけとp.NexeToken()しない
 	} else {
-		stmt := p.parseExpressionStatement()
+		//stmt := p.parseExpressionStatement()
+		stmt := p.parseStatement() // continueとか式じゃないのがあり得る
 		addStatements(stmt)
 	}
 	// コンストラクタを示すフラグをセット
@@ -197,6 +202,38 @@ func (p *Parser) parseLoopStatement() *ast.LoopStatement {
 	}
 	p.nextToken() // ")"なのでブロックの先頭に進める
 	stmt.Block = p.parseBlockStatement()
+
+	return stmt
+}
+
+/*
+ * break
+ */
+func (p *Parser) parseBreakStatement() *ast.BreakStatement {
+
+	// リターンステートメントを準備
+	stmt := &ast.BreakStatement{Token: *p.curToken}
+
+	// セミコロンがあれば飛ばす（なくてもエラーにならない）
+	if p.peekTokenIs(token.SEMICOLON) {
+		p.nextToken()
+	}
+
+	return stmt
+}
+
+/*
+ * continue
+ */
+func (p *Parser) parseContinueStatement() *ast.ContinueStatement {
+
+	// リターンステートメントを準備
+	stmt := &ast.ContinueStatement{Token: *p.curToken}
+
+	// セミコロンがあれば飛ばす（なくてもエラーにならない）
+	if p.peekTokenIs(token.SEMICOLON) {
+		p.nextToken()
+	}
 
 	return stmt
 }

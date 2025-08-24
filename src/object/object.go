@@ -20,6 +20,8 @@ const (
 	HASH_OBJ         ObjectType = "HASH"
 	TYPE_OBJ         ObjectType = "TYPE"
 	CLASS_OBJ        ObjectType = "CLASS"
+	BREAK_OBJ        ObjectType = "BREAK"
+	CONTINUE_OBJ     ObjectType = "CONTINUE"
 )
 
 var (

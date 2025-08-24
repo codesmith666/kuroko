@@ -161,9 +161,26 @@ func TestEvaluator(t *testing.T) {
 			d:"desu",
 		}
 
+
 	 	loop(mut i=hash){
+			if (i.v=="nano") break
 			puts(i)
 		}
+		puts("----------")
+	 	loop(mut i=hash){
+			if (i.v=="nano") continue
+			puts(i)
+		}
+		puts("----------")
+		imm a = ()=>{
+			puts("loop start")
+			loop(mut i=hash){
+				if (i.v=="nano") return i.v
+				puts(i)
+			}
+			puts("loop end")
+		}()
+		puts(a)
 	`
 
 	env := object.NewEnvironment()

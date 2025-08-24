@@ -169,6 +169,16 @@ func PrintAST(node Node, indent string) {
 		PrintAST(n.Block, indent+"  ")
 	case *BlockStatement:
 		fmt.Printf("%s  %s\n", indent, n.String())
+	case *IfExpression:
+		fmt.Printf("%s  [confition]\n", indent)
+		PrintAST(n.Condition, indent+"  ")
+		fmt.Printf("%s  [consequence]\n", indent)
+		PrintAST(n.Consequence, indent+"  ")
+		if n.Alternative != nil {
+			fmt.Printf("%s  [alternative]\n", indent)
+			PrintAST(n.Alternative, indent+"  ")
+		}
+
 	default:
 		fmt.Printf("%sUnknown node: %T\n", indent, n)
 	}

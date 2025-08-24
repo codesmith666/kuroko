@@ -74,16 +74,18 @@ const (
 	STRING    TokenType = "STRING"
 
 	// 予約語
-	TRUE   TokenType = "TRUE"
-	FALSE  TokenType = "FALSE"
-	IF     TokenType = "IF"
-	ELSE   TokenType = "ELSE"
-	LOOP   TokenType = "LOOP"
-	RETURN TokenType = "RETURN"
-	SHARE  TokenType = "SHARE"
-	CONST  TokenType = "CONST"
-	IMM    TokenType = "IMM"
-	MUT    TokenType = "MUT"
+	TRUE     TokenType = "TRUE"
+	FALSE    TokenType = "FALSE"
+	IF       TokenType = "IF"
+	ELSE     TokenType = "ELSE"
+	LOOP     TokenType = "LOOP"
+	RETURN   TokenType = "RETURN"
+	CONTINUE TokenType = "CONTINUE"
+	BREAK    TokenType = "BREAK"
+	SHARE    TokenType = "SHARE"
+	CONST    TokenType = "CONST"
+	IMM      TokenType = "IMM"
+	MUT      TokenType = "MUT"
 )
 
 // オペレータの配列
@@ -157,16 +159,18 @@ func (t *Token) String() string {
 }
 
 var Reserved = map[string]TokenType{
-	"true":   TRUE,
-	"false":  FALSE,
-	"if":     IF,
-	"else":   ELSE,
-	"loop":   LOOP,
-	"return": RETURN,
-	"share":  SHARE,
-	"const":  CONST,
-	"imm":    IMM,
-	"mut":    MUT,
+	"true":     TRUE,
+	"false":    FALSE,
+	"if":       IF,
+	"else":     ELSE,
+	"loop":     LOOP,
+	"return":   RETURN,
+	"continue": CONTINUE,
+	"break":    BREAK,
+	"share":    SHARE,
+	"const":    CONST,
+	"imm":      IMM,
+	"mut":      MUT,
 }
 
 var Types = map[string]bool{

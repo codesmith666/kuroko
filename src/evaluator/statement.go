@@ -18,13 +18,19 @@ func evalBlockStatement(
 		result = Eval(statement, env)
 		// エラーじゃなかったら
 		if result != nil {
-			rt := result.Type()
-			if rt == object.RETURN_VALUE_OBJ || rt == object.ERROR_OBJ {
+			// ループを抜けて終了するパターン
+			switch result.Type() {
+			case object.ERROR_OBJ:
+				return result
+			case object.RETURN_VALUE_OBJ:
+				return result
+			case object.BREAK_OBJ:
+				return result
+			case object.CONTINUE_OBJ:
 				return result
 			}
 		}
 	}
-
 	return result
 }
 
@@ -144,4 +150,46 @@ func evalAssignStatement(
 	default:
 		return newError("invalid assignment target")
 	}
+}
+
+func evalLoopStatement(
+	node *ast.LoopStatement,
+	env *object.Environment,
+) object.Object {
+	val := Eval(node.Bind.Value, env)
+	if isError(val) {
+		return val
+	}
+	key := node.Bind.Ident.Name
+	exEnv := object.NewEnclosedEnvironment(env)
+	iter := object.NewHash()
+	index := int64(0)
+	kk := &object.String{Value: "k"}
+	kv := &object.String{Value: "v"}
+	ki := &object.String{Value: "i"}
+
+	switch hash := val.(type) {
+	case *object.Hash:
+		var ret object.Object = nil
+		hash.Range(func(k *object.Object, v *object.Object) bool {
+			iter.Set(kk, *k)
+			iter.Set(kv, *v)
+			iter.Set(ki, &object.Integer{Value: index})
+			exEnv.Set(key, iter)
+			evaluated := Eval(node.Block, exEnv)
+			switch evaluated.(type) {
+			case *object.Break:
+				return false
+			case *object.Continue:
+				return true
+			case *object.ReturnValue:
+				ret = evaluated
+				return false
+			}
+			index++
+			return true
+		})
+		return ret
+	}
+	return nil
 }

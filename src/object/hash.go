@@ -138,3 +138,10 @@ func (h *Hash) Merge(source *Hash) *Hash {
 	})
 	return h
 }
+
+// ループ
+func (h *Hash) Range(fn func(key *Object, val *Object) bool) {
+	h.pairs.Range(func(k HashKey, p *HashPair) bool {
+		return fn(&p.key, &p.value)
+	})
+}

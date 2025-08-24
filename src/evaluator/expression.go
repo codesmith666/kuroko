@@ -221,14 +221,18 @@ func evalStringInfixExpression(
 	operator string,
 	left, right object.Object,
 ) object.Object {
-	if operator != "+" {
-		return newError("unknown operator: %s %s %s",
-			left.Type(), operator, right.Type())
-	}
 
 	leftVal := left.(*object.String).Value
 	rightVal := right.(*object.String).Value
-	return &object.String{Value: leftVal + rightVal}
+	switch operator {
+	case "+":
+		return &object.String{Value: leftVal + rightVal}
+	case "==":
+		return evalBoolLiteral(leftVal == rightVal)
+	default:
+		return newError("unknown operator: %s %s %s",
+			left.Type(), operator, right.Type())
+	}
 }
 
 /*
@@ -371,7 +375,7 @@ func evalCallExpression(
 		// 戻り値を取得する
 		if returnValue, ok := evaluated.(*object.ReturnValue); ok {
 			result := returnValue.Value
-			if class := result.(*object.Class); class != nil {
+			if class, ok := result.(*object.Class); ok {
 				if !class.SetClassName(fn.Name) {
 					return newError("class name already initialized.")
 				}
