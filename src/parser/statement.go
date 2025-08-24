@@ -20,6 +20,8 @@ func (p *Parser) parseStatement() ast.Statement {
 		return p.parseCommentStatement()
 	case token.PARSE:
 		return p.parseEllipsisStatement()
+	case token.LOOP:
+		return p.parseLoopStatement()
 	default:
 		return p.parseExpressionStatement()
 	}
@@ -126,9 +128,8 @@ func (p *Parser) parseBlockStatement() *ast.BlockStatement {
 	block := &ast.BlockStatement{Token: *p.curToken}
 	block.Statements = []ast.Statement{}
 
-	// ステートメントを一覧に追加
-	// このとき return this を見つけたら
-	// コンストラクタを示すフラグも返す。
+	// ステートメントを一覧に追加するヘルパー
+	// なんか共通処理としてデバッグしたかった
 	addStatements := func(stmt ast.Statement) {
 		block.Statements = append(block.Statements, stmt)
 	}
@@ -175,5 +176,27 @@ func (p *Parser) parseEllipsisStatement() ast.Statement {
 	stmt := &ast.DeriveStatement{Token: *p.curToken}
 	p.nextToken()
 	stmt.Right = p.parseExpression(LOWEST)
+	return stmt
+}
+
+func (p *Parser) parseLoopStatement() *ast.LoopStatement {
+	stmt := &ast.LoopStatement{Token: *p.curToken}
+	if !p.expectPeek(token.LPAREN) {
+		return nil
+	}
+	p.nextToken() // "("なのでここで letに進める
+
+	// let(imm/mut)を取得
+	stmt.Bind = p.parseLetStatement()
+	if stmt.Bind == nil {
+		return nil
+	}
+
+	if !p.expectPeek(token.RPAREN) {
+		return nil
+	}
+	p.nextToken() // ")"なのでブロックの先頭に進める
+	stmt.Block = p.parseBlockStatement()
+
 	return stmt
 }

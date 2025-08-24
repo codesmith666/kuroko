@@ -74,5 +74,5 @@ func TestParser(t *testing.T) {
 	fmt.Print("--------------------------------------\n")
 	fmt.Printf("%s\n", input)
 	fmt.Print("--------------------------------------\n")
-	fmt.Printf("%s\n", a.String(0))
+	fmt.Printf("%s\n", a.String())
 }

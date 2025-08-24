@@ -14,7 +14,7 @@ type Identifier struct {
 
 func (i *Identifier) expressionNode()      {}
 func (i *Identifier) TokenLiteral() string { return i.Token.Literal }
-func (i *Identifier) String(depth int) string {
+func (i *Identifier) String() string {
 	var out bytes.Buffer
 	out.WriteString(i.Name)
 	out.WriteString(":")

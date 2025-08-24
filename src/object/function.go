@@ -24,7 +24,7 @@ func (f *Function) Inspect() string {
 
 	params := []string{}
 	for _, p := range f.Parameters {
-		params = append(params, p.String(0))
+		params = append(params, p.String())
 	}
 
 	if f.Name == "" {
@@ -35,7 +35,7 @@ func (f *Function) Inspect() string {
 	out.WriteString("(")
 	out.WriteString(strings.Join(params, ", "))
 	out.WriteString(") => \n")
-	out.WriteString(f.Body.String(0))
+	out.WriteString(f.Body.String())
 
 	return out.String()
 }

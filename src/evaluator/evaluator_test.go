@@ -153,9 +153,18 @@ func TestEvaluator(t *testing.T) {
 	puts(e instanceof ClassE)
 `
 
-	// 	input = `
-	// 	imm a = 11.11 + 12.34;
-	// `
+	input = `
+		imm hash = {
+			a:"hoge",
+			b:"gabu",
+			c:"nano",
+			d:"desu",
+		}
+
+	 	loop(mut i=hash){
+			puts(i)
+		}
+	`
 
 	env := object.NewEnvironment()
 	p := parser.NewParser(input)

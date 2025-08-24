@@ -16,14 +16,11 @@ type PrefixExpression struct {
 
 func (pe *PrefixExpression) expressionNode()      {}
 func (pe *PrefixExpression) TokenLiteral() string { return pe.Token.Literal }
-func (pe *PrefixExpression) String(depth int) string {
+func (pe *PrefixExpression) String() string {
 	var out bytes.Buffer
-	if pe.Token.Type == token.PARSE {
-		out.WriteString(Indent(depth))
-	}
 	out.WriteString("(")
 	out.WriteString(pe.Operator)
-	out.WriteString(pe.Right.String(depth + 1))
+	out.WriteString(pe.Right.String())
 	out.WriteString(")")
 	if pe.Token.Type == token.PARSE {
 		out.WriteString(";\n")
@@ -41,13 +38,13 @@ type InfixExpression struct {
 
 func (ie *InfixExpression) expressionNode()      {}
 func (ie *InfixExpression) TokenLiteral() string { return ie.Token.Literal }
-func (ie *InfixExpression) String(depth int) string {
+func (ie *InfixExpression) String() string {
 	var out bytes.Buffer
 
 	out.WriteString("(")
-	out.WriteString(ie.Left.String(depth + 1))
+	out.WriteString(ie.Left.String())
 	out.WriteString(" " + ie.Operator + " ")
-	out.WriteString(ie.Right.String(depth + 1))
+	out.WriteString(ie.Right.String())
 	out.WriteString(")")
 
 	return out.String()
@@ -63,18 +60,18 @@ type IfExpression struct {
 
 func (ie *IfExpression) expressionNode()      {}
 func (ie *IfExpression) TokenLiteral() string { return ie.Token.Literal }
-func (ie *IfExpression) String(depth int) string {
+func (ie *IfExpression) String() string {
 	var out bytes.Buffer
 
 	out.WriteString("if (")
-	out.WriteString(ie.Condition.String(depth + 1))
+	out.WriteString(ie.Condition.String())
 	out.WriteString("){")
-	out.WriteString(ie.Consequence.String(depth + 1))
+	out.WriteString(ie.Consequence.String())
 	out.WriteString("}")
 
 	if ie.Alternative != nil {
 		out.WriteString(" else{")
-		out.WriteString(ie.Alternative.String(depth + 1))
+		out.WriteString(ie.Alternative.String())
 		out.WriteString("}")
 	}
 	out.WriteString("\n")
@@ -91,13 +88,13 @@ type IndexExpression struct {
 
 func (ie *IndexExpression) expressionNode()      {}
 func (ie *IndexExpression) TokenLiteral() string { return ie.Token.Literal }
-func (ie *IndexExpression) String(depth int) string {
+func (ie *IndexExpression) String() string {
 	var out bytes.Buffer
 
 	out.WriteString("(")
-	out.WriteString(ie.Left.String(depth + 1))
+	out.WriteString(ie.Left.String())
 	out.WriteString("[")
-	out.WriteString(ie.Index.String(depth + 1))
+	out.WriteString(ie.Index.String())
 	out.WriteString("])")
 
 	return out.String()
@@ -112,8 +109,8 @@ type DotExpression struct {
 
 func (de *DotExpression) expressionNode()      {}
 func (de *DotExpression) TokenLiteral() string { return de.Token.Literal }
-func (de *DotExpression) String(depth int) string {
-	return fmt.Sprintf("%s.%s", de.Left.String(depth), de.Right.String(depth))
+func (de *DotExpression) String() string {
+	return fmt.Sprintf("%s.%s", de.Left.String(), de.Right.String())
 }
 
 // 関数呼び出し
@@ -125,15 +122,15 @@ type CallExpression struct {
 
 func (ce *CallExpression) expressionNode()      {}
 func (ce *CallExpression) TokenLiteral() string { return ce.Token.Literal }
-func (ce *CallExpression) String(depth int) string {
+func (ce *CallExpression) String() string {
 	var out bytes.Buffer
 
 	args := []string{}
 	for _, a := range ce.Arguments {
-		args = append(args, a.String(depth+1))
+		args = append(args, a.String())
 	}
 
-	out.WriteString(ce.Function.String(depth + 1))
+	out.WriteString(ce.Function.String())
 	//out.WriteString(Type(ce))
 	out.WriteString("(")
 	out.WriteString(strings.Join(args, ", "))

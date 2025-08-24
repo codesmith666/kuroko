@@ -3,6 +3,7 @@ package parser
 import (
 	"fmt"
 	"monkey/ast"
+	"monkey/lib"
 	"monkey/token"
 	"strconv"
 )
@@ -80,8 +81,11 @@ func (p *Parser) parseArrayLiteral() ast.Expression {
 
 // ハッシュリテラル
 func (p *Parser) parseHashLiteral() ast.Expression {
-	hash := &ast.HashLiteral{Token: *p.curToken}
-	hash.Pairs = make(map[ast.Expression]ast.Expression)
+	hash := &ast.HashLiteral{
+		Token: *p.curToken,
+		Pairs: lib.New[ast.Expression, ast.Expression](),
+	}
+	//hash.Pairs = make(map[ast.Expression]ast.Expression)
 
 	for !p.peekTokenIs(token.RBRACE) {
 		p.nextToken()
@@ -105,7 +109,8 @@ func (p *Parser) parseHashLiteral() ast.Expression {
 		// ここから式
 		value := p.parseExpression(LOWEST)
 
-		hash.Pairs[key] = value
+		hash.Pairs.Set(key, value)
+		//hash.Pairs[key] = value
 
 		if !p.peekTokenIs(token.RBRACE) && !p.expectPeek(token.COMMA) {
 			return nil

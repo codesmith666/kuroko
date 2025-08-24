@@ -78,6 +78,7 @@ const (
 	FALSE  TokenType = "FALSE"
 	IF     TokenType = "IF"
 	ELSE   TokenType = "ELSE"
+	LOOP   TokenType = "LOOP"
 	RETURN TokenType = "RETURN"
 	SHARE  TokenType = "SHARE"
 	CONST  TokenType = "CONST"
@@ -160,6 +161,7 @@ var Reserved = map[string]TokenType{
 	"false":  FALSE,
 	"if":     IF,
 	"else":   ELSE,
+	"loop":   LOOP,
 	"return": RETURN,
 	"share":  SHARE,
 	"const":  CONST,

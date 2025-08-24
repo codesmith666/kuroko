@@ -3,6 +3,7 @@ package object
 import (
 	"bytes"
 	"fmt"
+	"monkey/lib"
 	"strings"
 )
 
@@ -64,8 +65,7 @@ func (hp *HashPair) Value() Object {
  * 順序付きマップ
  */
 type Hash struct {
-	order []HashKey
-	pairs map[HashKey]HashPair
+	pairs *lib.OrderedMap[HashKey, *HashPair]
 }
 
 func (h *Hash) Type() ObjectType { return HASH_OBJ }
@@ -73,10 +73,12 @@ func (h *Hash) Inspect() string {
 	var out bytes.Buffer
 
 	pairs := []string{}
-	for _, pair := range h.Items() {
+
+	h.pairs.Range(func(k HashKey, v *HashPair) bool {
 		pairs = append(pairs, fmt.Sprintf("%s: %s",
-			pair.key.Inspect(), pair.value.Inspect()))
-	}
+			v.key.Inspect(), v.value.Inspect()))
+		return true
+	})
 
 	out.WriteString("{")
 	out.WriteString(strings.Join(pairs, ", "))
@@ -88,20 +90,15 @@ func (h *Hash) Inspect() string {
 // 新規
 func NewHash() *Hash {
 	return &Hash{
-		pairs: make(map[HashKey]HashPair),
-		order: []HashKey{},
+		pairs: lib.New[HashKey, *HashPair](),
 	}
 }
 
 // 保存
 func (h *Hash) Set(key Object, value Object) *HashError {
+
 	if k, ok := key.(Hashable); ok {
-		hash := k.HashKey()
-		if _, exists := h.pairs[hash]; !exists {
-			h.order = append(h.order, hash)
-		}
-		h.pairs[hash] = HashPair{key: key, value: value}
-		return nil
+		h.pairs.Set(k.HashKey(), &HashPair{key: key, value: value})
 	}
 	return InvalidKey.clone("key is not hashable: %#v", key)
 }
@@ -109,11 +106,10 @@ func (h *Hash) Set(key Object, value Object) *HashError {
 // 取得
 func (h *Hash) Get(key Object) (Object, *HashError) {
 	if k, ok := key.(Hashable); ok {
-		if hashPair, ok := h.pairs[k.HashKey()]; ok {
-			return hashPair.value, nil
-		} else {
-			return nil, NotFound.clone("key not found: %#v", key)
+		if hp, ok := h.pairs.Get(k.HashKey()); ok {
+			return hp.value, nil
 		}
+		return nil, NotFound.clone("key not found: %#v", key)
 	}
 	return nil, InvalidKey.clone("key is not hashable: %#v", key)
 }
@@ -121,42 +117,24 @@ func (h *Hash) Get(key Object) (Object, *HashError) {
 // 削除
 func (h *Hash) Delete(key Object) *HashError {
 	if k, ok := key.(Hashable); ok {
-		hash := k.HashKey()
-		if _, exists := h.pairs[hash]; !exists {
-			return NotFound.clone("key not found: %#v", key)
+		if ok := h.pairs.Delete(k.HashKey()); ok {
+			return nil
 		}
-		delete(h.pairs, hash)
-
-		// keys からも削除（新しい一覧を作って保存する）
-		newKeys := make([]HashKey, 0, len(h.order)-1)
-		for _, k := range h.order {
-			if k != hash {
-				newKeys = append(newKeys, hash)
-			}
-		}
-		h.order = newKeys
-		return nil
+		return NotFound.clone("key not found: %#v", key)
 	}
 	return InvalidKey.clone("key is not hashable: %#v", key)
 
 }
 
-// 順番の正しいHashPairの一覧を返す（for用）
-func (h *Hash) Items() []HashPair {
-	result := []HashPair{}
-	for _, k := range h.order {
-		result = append(result, h.pairs[k])
-	}
-	return result
-}
-
 // 別のハッシュをマージする
 func (h *Hash) Merge(source *Hash) *Hash {
-	for _, hashPair := range source.Items() {
-		keyObj := hashPair.Key()
+
+	source.pairs.Range(func(k HashKey, v *HashPair) bool {
+		keyObj := v.Key()
 		if keyObj.Type() == STRING_OBJ {
-			h.Set(keyObj, hashPair.Value())
+			h.Set(keyObj, v.Value())
 		}
-	}
+		return true
+	})
 	return h
 }

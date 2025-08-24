@@ -16,11 +16,11 @@ func (p *Program) TokenLiteral() string {
 	}
 }
 
-func (p *Program) String(depth int) string {
+func (p *Program) String() string {
 	var out bytes.Buffer
 
 	for _, s := range p.Statements {
-		out.WriteString(s.String(depth + 1))
+		out.WriteString(s.String())
 	}
 	// re := regexp.MustCompile(`\n{2,}`)
 	// return re.ReplaceAllString(out.String(), "\n")

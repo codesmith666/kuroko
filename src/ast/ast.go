@@ -9,7 +9,7 @@ import (
 // The base Node interface
 type Node interface {
 	TokenLiteral() string
-	String(depth int) string
+	String() string
 }
 
 // All statement nodes implement this
@@ -125,12 +125,13 @@ func PrintAST(node Node, indent string) {
 		fmt.Printf("%s  %s\n", indent, n.Value)
 
 	case *HashLiteral:
-		for k, v := range n.Pairs {
+		n.Pairs.Range(func(k Expression, v Expression) bool {
 			fmt.Printf("%s  [key]\n", indent)
 			PrintAST(k, indent+"  ")
 			fmt.Printf("%s  [value]\n", indent)
 			PrintAST(v, indent+"  ")
-		}
+			return true
+		})
 
 	case *ReturnStatement:
 		if n.ReturnValue != nil {
@@ -161,7 +162,13 @@ func PrintAST(node Node, indent string) {
 		fmt.Printf("%s  %f\n", indent, n.Value)
 	case *ComplexLiteral:
 		fmt.Printf("%s  %f\n", indent, n.Value)
-
+	case *LoopStatement:
+		fmt.Printf("%s  [bind]\n", indent)
+		PrintAST(n.Bind, indent+"  ")
+		fmt.Printf("%s  [block]\n", indent)
+		PrintAST(n.Block, indent+"  ")
+	case *BlockStatement:
+		fmt.Printf("%s  %s\n", indent, n.String())
 	default:
 		fmt.Printf("%sUnknown node: %T\n", indent, n)
 	}
